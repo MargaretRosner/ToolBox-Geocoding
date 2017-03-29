@@ -8,7 +8,11 @@ https://sites.google.com/site/sd15spring/home/project-toolbox/geocoding-and-web-
 """
 
 from urllib.request import urlopen
+from urllib.parse import urlencode
 import json
+from pprint import pprint
+url = "https://maps.googleapis.com/maps/api/geocode/json?address=Fenway%20Park"
+
 
 
 # Useful URLs (you need to add the appropriate parameters for your requests)
@@ -24,7 +28,14 @@ def get_json(url):
     Given a properly formatted URL for a JSON web API request, return
     a Python JSON object containing the response to that request.
     """
-    pass
+
+    f = urlopen(url)
+    response_text = f.read()
+    response_data = json.loads(str(response_text, "utf-8"))
+    #pprint(response_data)
+    #print(response_data["results"][0]["formatted_address"])
+    return(response_data["results"][0]["geometry"]["location"])
+    #print(response_data)
 
 
 def get_lat_long(place_name):
@@ -35,8 +46,11 @@ def get_lat_long(place_name):
     See https://developers.google.com/maps/documentation/geocoding/
     for Google Maps Geocode API URL formatting requirements.
     """
-    pass
 
+    params = urlencode({'address':place_name})
+    paramsurl = GMAPS_BASE_URL + '?'+params
+    data = get_json(paramsurl)
+    return (data['lat'], data['lng'])
 
 def get_nearest_station(latitude, longitude):
     """
@@ -46,7 +60,14 @@ def get_nearest_station(latitude, longitude):
     See http://realtime.mbta.com/Portal/Home/Documents for URL
     formatting requirements for the 'stopsbylocation' API.
     """
-    pass
+
+    stoplatlng = urlencode({'lat':latitude, 'lng':longitude})
+
+    stopurl = MBTA_BASE_URL + '?' + stoplatlng
+
+    datastop = get_json(stopurl)
+
+    return (datastop['stop_name'], datastop['distance'])
 
 
 def find_stop_near(place_name):
@@ -54,4 +75,10 @@ def find_stop_near(place_name):
     Given a place name or address, print the nearest MBTA stop and the
     distance from the given place to that stop.
     """
-    pass
+    latlng = get_lat_long(place_name)
+    return get_nearest_station(*latlng)
+
+
+print(get_lat_long('Fenway Park'))
+print(get_nearest_station(42.3466764, -71.0972178))
+print(find_stop_near('Fenway Park'))
